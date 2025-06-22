@@ -1,0 +1,95 @@
+<?php
+
+namespace {{ namespace }};
+
+use {{ modelNamespace }}\{{ class }};
+use App\Repositories\{{ repositoryNamespace }}{{ class }}Repository;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
+
+class {{ class }}Service
+{
+    /**
+     * The repository instance.
+     */
+    protected $repository;
+
+    /**
+     * Create a new service instance.
+     */
+    public function __construct({{ class }}Repository $repository)
+    {
+        $this->repository = $repository;
+    }
+
+    /**
+     * Get all resources.
+     */
+    public function all(array $columns = ['*']): Collection
+    {
+        return $this->repository->all($columns);
+    }
+
+    /**
+     * Get paginated resources.
+     */
+    public function paginate(
+        int $perPage = 10,
+        ?string $search = null,
+        array $filters = [],
+        array $columns = ['*']
+    ): LengthAwarePaginator {
+        return $this->repository->paginate($perPage, $search, $filters, $columns);
+    }
+
+    /**
+     * Get a resource by its ID.
+     */
+    public function find(int $id, array $columns = ['*']): ?{{ class }}
+    {
+        return $this->repository->find($id, $columns);
+    }
+
+    /**
+     * Create a new resource.
+     */
+    public function create(array $data): {{ class }}
+    {
+        // Additional business logic can be added here before creation
+        return $this->repository->create($data);
+    }
+
+    /**
+     * Update a resource.
+     */
+    public function update({{ class }} ${{ variableName }}, array $data): bool
+    {
+        // Additional business logic can be added here before update
+        return $this->repository->update(${{ variableName }}, $data);
+    }
+
+    /**
+     * Delete a resource.
+     */
+    public function delete({{ class }} ${{ variableName }}): bool
+    {
+        // Additional business logic can be added here before deletion
+        return $this->repository->delete(${{ variableName }});
+    }
+
+    /**
+     * Restore a soft-deleted resource.
+     */
+    public function restore({{ class }} ${{ variableName }}): bool
+    {
+        return $this->repository->restore(${{ variableName }});
+    }
+
+    /**
+     * Permanently delete a soft-deleted resource.
+     */
+    public function forceDelete({{ class }} ${{ variableName }}): bool
+    {
+        return $this->repository->forceDelete(${{ variableName }});
+    }
+}

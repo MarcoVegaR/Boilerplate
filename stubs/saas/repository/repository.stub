@@ -1,0 +1,96 @@
+<?php
+
+namespace {{ namespace }};
+
+use {{ modelNamespace }}\{{ class }};
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
+
+class {{ class }}Repository
+{
+    /**
+     * Get all resources.
+     */
+    public function all(array $columns = ['*']): Collection
+    {
+        return {{ class }}::all($columns);
+    }
+
+    /**
+     * Get paginated resources.
+     */
+    public function paginate(
+        int $perPage = 10,
+        ?string $search = null,
+        array $filters = [],
+        array $columns = ['*']
+    ): LengthAwarePaginator {
+        $query = {{ class }}::query();
+
+        // Apply search if provided
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                // Add searchable columns
+                $q->where('name', 'like', "%{$search}%");
+                // Add more searchable columns as needed
+            });
+        }
+
+        // Apply filters
+        foreach ($filters as $field => $value) {
+            if ($value !== null && $value !== '') {
+                $query->where($field, $value);
+            }
+        }
+
+        return $query->orderBy('created_at', 'desc')->paginate($perPage, $columns);
+    }
+
+    /**
+     * Get a resource by its ID.
+     */
+    public function find(int $id, array $columns = ['*']): ?{{ class }}
+    {
+        return {{ class }}::find($id, $columns);
+    }
+
+    /**
+     * Create a new resource.
+     */
+    public function create(array $data): {{ class }}
+    {
+        return {{ class }}::create($data);
+    }
+
+    /**
+     * Update a resource.
+     */
+    public function update({{ class }} ${{ variableName }}, array $data): bool
+    {
+        return ${{ variableName }}->update($data);
+    }
+
+    /**
+     * Delete a resource.
+     */
+    public function delete({{ class }} ${{ variableName }}): bool
+    {
+        return ${{ variableName }}->delete();
+    }
+
+    /**
+     * Restore a soft-deleted resource.
+     */
+    public function restore({{ class }} ${{ variableName }}): bool
+    {
+        return ${{ variableName }}->restore();
+    }
+
+    /**
+     * Permanently delete a soft-deleted resource.
+     */
+    public function forceDelete({{ class }} ${{ variableName }}): bool
+    {
+        return ${{ variableName }}->forceDelete();
+    }
+}

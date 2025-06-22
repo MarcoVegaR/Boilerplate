@@ -1,0 +1,11 @@
+{
+  "*.{js,jsx,ts,tsx}": [
+    "eslint --fix"
+  ],
+  "*.{css,scss}": [
+    "prettier --write"
+  ],
+  "*.php": [
+    "php ./vendor/bin/pint"
+  ]
+}

@@ -1,0 +1,106 @@
+<?php
+
+namespace {{ namespace }};
+
+use {{ modelNamespace }}\{{ class }};
+use {{ requestNamespace }}\Store{{ class }}Request;
+use {{ requestNamespace }}\Update{{ class }}Request;
+use App\Services\{{ serviceNamespace }}{{ class }}Service;
+use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
+use Inertia\Inertia;
+use Inertia\Response;
+
+class {{ class }}Controller extends Controller
+{
+    /**
+     * The {{ class }} service instance.
+     */
+    protected $service;
+
+    /**
+     * Create a new controller instance.
+     */
+    public function __construct({{ class }}Service $service)
+    {
+        $this->service = $service;
+    }
+
+    /**
+     * Display a listing of the resource.
+     */
+    public function index(Request $request): Response
+    {
+        $items = $this->service->paginate(
+            perPage: 10,
+            search: $request->input('search'),
+            filters: $request->only(['is_active'])
+        );
+
+        return Inertia::render('{{ inertiaPath }}/Index', [
+            'items' => $items,
+            'filters' => $request->only(['search', 'is_active']),
+        ]);
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create(): Response
+    {
+        return Inertia::render('{{ inertiaPath }}/Create');
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Store{{ class }}Request $request): RedirectResponse
+    {
+        $this->service->create($request->validated());
+
+        return redirect()->route('{{ routePrefix }}.index')
+            ->with('success', '{{ class }} created successfully.');
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show({{ class }} ${{ variableName }}): Response
+    {
+        return Inertia::render('{{ inertiaPath }}/Show', [
+            'item' => ${{ variableName }},
+        ]);
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit({{ class }} ${{ variableName }}): Response
+    {
+        return Inertia::render('{{ inertiaPath }}/Edit', [
+            'item' => ${{ variableName }},
+        ]);
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Update{{ class }}Request $request, {{ class }} ${{ variableName }}): RedirectResponse
+    {
+        $this->service->update(${{ variableName }}, $request->validated());
+
+        return redirect()->route('{{ routePrefix }}.index')
+            ->with('success', '{{ class }} updated successfully.');
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy({{ class }} ${{ variableName }}): RedirectResponse
+    {
+        $this->service->delete(${{ variableName }});
+
+        return redirect()->route('{{ routePrefix }}.index')
+            ->with('success', '{{ class }} deleted successfully.');
+    }
+}
