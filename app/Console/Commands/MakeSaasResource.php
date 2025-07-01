@@ -42,6 +42,13 @@ class MakeSaasResource extends Command
         $connection = $isTenant ? 'tenant' : 'landlord';
         $connectionPath = $isTenant ? 'tenant' : 'landlord';
         
+        // Prevenir crear recursos de gestión de tenants en contexto tenant
+        if (strtolower($name) === 'tenant' && $isTenant) {
+            $this->error("Error: No se puede crear un recurso Tenant en el contexto tenant.");
+            $this->info("Los recursos Tenant solo deben ser administrados desde el contexto admin.");
+            return 1;
+        }
+        
         $this->info("Generating {$name} CRUD resource for " . ($isTenant ? 'tenant' : 'admin') . " context...");
         
         // Determine which components to generate
@@ -74,10 +81,12 @@ class MakeSaasResource extends Command
         }
         
         if ($generateRepository) {
+            $this->createRepositoryInterface($name, $isTenant);
             $this->createRepository($name, $isTenant);
         }
         
         if ($generateService) {
+            $this->createServiceInterface($name, $isTenant);
             $this->createService($name, $isTenant);
         }
         
@@ -95,6 +104,11 @@ class MakeSaasResource extends Command
         
         if ($generateReact) {
             $this->createReactComponents($name, $isTenant);
+        }
+        
+        // Register the bindings in RepositoryServiceProvider
+        if ($generateRepository && $generateService) {
+            $this->registerBindings($name, $isTenant);
         }
         
         $this->info("\n✅ CRUD resource for {$name} has been generated successfully!");
@@ -326,6 +340,112 @@ class MakeSaasResource extends Command
         }
         
         $this->info("✓ React components created for {$modelName}");
+    }
+    
+    /**
+     * Create repository interface.
+     */
+    protected function createRepositoryInterface(string $name, bool $isTenant): void
+    {
+        $modelName = Str::singular(Str::studly($name));
+        $interfaceName = "{$modelName}RepositoryInterface";
+        $namespace = 'App\\Repositories\\Contracts';
+        $modelNamespace = 'App\\Models';
+        
+        $stubPath = base_path('stubs/saas/repository/repository.interface.stub');
+        $targetDir = app_path('Repositories/Contracts');
+        $targetPath = "{$targetDir}/{$interfaceName}.php";
+        
+        // Ensure directories exist
+        File::ensureDirectoryExists($targetDir);
+        
+        $this->generateFileFromStub($stubPath, $targetPath, [
+            '{{ namespace }}' => $namespace,
+            '{{ modelNamespace }}' => $modelNamespace,
+            '{{ class }}' => $modelName,
+        ]);
+        
+        $this->info("✓ Repository Interface created: {$interfaceName}");
+    }
+    
+    /**
+     * Create service interface.
+     */
+    protected function createServiceInterface(string $name, bool $isTenant): void
+    {
+        $modelName = Str::singular(Str::studly($name));
+        $interfaceName = "{$modelName}ServiceInterface";
+        $namespace = 'App\\Services\\Contracts';
+        $modelNamespace = 'App\\Models';
+        
+        $stubPath = base_path('stubs/saas/service/service.interface.stub');
+        $targetDir = app_path('Services/Contracts');
+        $targetPath = "{$targetDir}/{$interfaceName}.php";
+        
+        // Ensure directories exist
+        File::ensureDirectoryExists($targetDir);
+        
+        $this->generateFileFromStub($stubPath, $targetPath, [
+            '{{ namespace }}' => $namespace,
+            '{{ modelNamespace }}' => $modelNamespace,
+            '{{ class }}' => $modelName,
+        ]);
+        
+        $this->info("✓ Service Interface created: {$interfaceName}");
+    }
+    
+    /**
+     * Register bindings in RepositoryServiceProvider.
+     */
+    protected function registerBindings(string $name, bool $isTenant): void
+    {
+        $modelName = Str::singular(Str::studly($name));
+        $repositoryInterfaceName = "\\App\\Repositories\\Contracts\\{$modelName}RepositoryInterface";
+        $repositoryName = $isTenant 
+            ? "\\App\\Repositories\\Tenant\\{$modelName}Repository" 
+            : "\\App\\Repositories\\Admin\\{$modelName}Repository";
+        
+        $serviceInterfaceName = "\\App\\Services\\Contracts\\{$modelName}ServiceInterface";
+        $serviceName = $isTenant 
+            ? "\\App\\Services\\Tenant\\{$modelName}Service" 
+            : "\\App\\Services\\Admin\\{$modelName}Service";
+        
+        // Path to RepositoryServiceProvider
+        $providerPath = app_path('Providers/RepositoryServiceProvider.php');
+        
+        if (!File::exists($providerPath)) {
+            $this->error("RepositoryServiceProvider.php not found at {$providerPath}");
+            return;
+        }
+        
+        // Read the provider content
+        $content = File::get($providerPath);
+        
+        // Find the register method
+        $pattern = '/public function register\(\): void\s*{\s*(.*?)\s*}/s';
+        if (preg_match($pattern, $content, $matches)) {
+            $registerMethod = $matches[1];
+            
+            // Add new bindings
+            $newBindings = "\n        // {$modelName} bindings\n";
+            $newBindings .= "        \$this->app->bind({$repositoryInterfaceName}::class, {$repositoryName}::class);\n";
+            $newBindings .= "        \$this->app->bind({$serviceInterfaceName}::class, {$serviceName}::class);";
+            
+            // Check if bindings already exist
+            if (strpos($registerMethod, "{$modelName} bindings") === false) {
+                // Replace old register method with new one
+                $newRegisterMethod = str_replace($registerMethod, $registerMethod . $newBindings, $matches[0]);
+                $content = str_replace($matches[0], $newRegisterMethod, $content);
+                
+                // Write back to file
+                File::put($providerPath, $content);
+                $this->info("✓ Bindings registered in RepositoryServiceProvider");
+            } else {
+                $this->info("✓ Bindings already exist in RepositoryServiceProvider");
+            }
+        } else {
+            $this->error("Could not find register method in RepositoryServiceProvider");
+        }
     }
     
     /**

@@ -20,6 +20,9 @@ class DatabaseSeeder extends Seeder
             // Seed admin user
             AdminSeeder::class,
             
+            // Seed regular users
+            UserSeeder::class,
+            
             // Seed demo tenant (must be after plans)
             TenantSeeder::class,
         ]);

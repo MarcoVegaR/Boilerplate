@@ -3,21 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Spatie\Multitenancy\Models\Tenant as SpatieTenant;
 
-class Tenant extends SpatieTenant
+class Tenant extends Model
 {
     use HasFactory, SoftDeletes;
-    
-    /**
-     * The connection name for the model.
-     *
-     * @var string|null
-     */
-    protected $connection = 'landlord';
-    
+
     /**
      * The attributes that are mass assignable.
      *
@@ -31,60 +23,43 @@ class Tenant extends SpatieTenant
         'trial_ends_at',
         'subscription_ends_at',
         'is_active',
-        'settings',
+        'settings'
     ];
-    
+
     /**
      * The attributes that should be cast.
      *
      * @var array<string, string>
      */
     protected $casts = [
-        'trial_ends_at' => 'datetime',
-        'subscription_ends_at' => 'datetime',
         'is_active' => 'boolean',
         'settings' => 'array',
+        'trial_ends_at' => 'datetime',
+        'subscription_ends_at' => 'datetime'
     ];
     
     /**
-     * Get the plan associated with this tenant.
+     * The connection name for the model.
+     *
+     * @var string|null
      */
-    public function plan(): BelongsTo
+    protected $connection = 'landlord';
+    
+    /**
+     * Get the plan that owns the tenant.
+     */
+    public function plan()
     {
         return $this->belongsTo(Plan::class);
     }
-    
+
     /**
-     * Check if the tenant has a specific feature.
+     * Get the domain URL
+     * 
+     * @return string
      */
-    public function hasFeature(string $feature): bool
+    public function getDomainUrl(): string
     {
-        if (!$this->plan) {
-            return false;
-        }
-        
-        $features = $this->plan->features ?? [];
-        
-        return in_array($feature, $features);
-    }
-    
-    /**
-     * Check if the tenant is on trial.
-     */
-    public function onTrial(): bool
-    {
-        return $this->trial_ends_at && now()->lt($this->trial_ends_at);
-    }
-    
-    /**
-     * Check if the tenant's subscription is active.
-     */
-    public function subscriptionActive(): bool
-    {
-        if (!$this->subscription_ends_at) {
-            return false;
-        }
-        
-        return now()->lt($this->subscription_ends_at);
+        return 'https://' . $this->domain;
     }
 }

@@ -2,105 +2,106 @@
 
 namespace {{ namespace }};
 
-use {{ modelNamespace }}\{{ class }};
+use App\Http\Controllers\Controller;
+use App\Http\Controllers\Traits\HasCrudIndex;
+use App\Http\Controllers\Traits\HasCrudShow;
+use App\Http\Controllers\Traits\HasCrudCreate;
+use App\Http\Controllers\Traits\HasCrudEdit;
+use App\Http\Controllers\Traits\HasCrudStore;
+use App\Http\Controllers\Traits\HasCrudUpdate;
+use App\Http\Controllers\Traits\HasCrudDestroy;
+use App\Services\Contracts\{{ serviceNamespace }}{{ class }}ServiceInterface;
 use {{ requestNamespace }}\Store{{ class }}Request;
 use {{ requestNamespace }}\Update{{ class }}Request;
-use App\Services\{{ serviceNamespace }}{{ class }}Service;
-use Illuminate\Http\Request;
-use Illuminate\Http\RedirectResponse;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class {{ class }}Controller extends Controller
 {
+    use HasCrudIndex;
+    use HasCrudShow;
+    use HasCrudCreate;
+    use HasCrudEdit;
+    use HasCrudStore;
+    use HasCrudUpdate;
+    use HasCrudDestroy;
+
     /**
-     * The {{ class }} service instance.
+     * The service instance.
+     *
+     * @var {{ class }}ServiceInterface
      */
     protected $service;
-
+    
+    /**
+     * The base view path.
+     *
+     * @var string
+     */
+    protected string $viewPath;
+    
+    /**
+     * The base route name.
+     *
+     * @var string
+     */
+    protected string $routeName;
+    
+    /**
+     * Columns to search in.
+     *
+     * @var array
+     */
+    protected array $searchColumns = ['name', 'title', 'description'];
+    
+    /**
+     * Relationships to eager load.
+     *
+     * @var array
+     */
+    protected array $relationships = [];
+    
     /**
      * Create a new controller instance.
+     *
+     * @param {{ class }}ServiceInterface $service
      */
-    public function __construct({{ class }}Service $service)
+    public function __construct({{ class }}ServiceInterface $service)
     {
         $this->service = $service;
+        $this->viewPath = '{{ inertiaPath }}';
+        $this->routeName = '{{ routePrefix }}';
     }
 
     /**
-     * Display a listing of the resource.
+     * Provide specific validation rules for store action.
+     *
+     * @param Store{{ class }}Request $request
+     * @return array
      */
-    public function index(Request $request): Response
+    public function store(Store{{ class }}Request $request)
     {
-        $items = $this->service->paginate(
-            perPage: 10,
-            search: $request->input('search'),
-            filters: $request->only(['is_active'])
-        );
-
-        return Inertia::render('{{ inertiaPath }}/Index', [
-            'items' => $items,
-            'filters' => $request->only(['search', 'is_active']),
-        ]);
+        return $this->storeItem($request);
     }
-
+    
     /**
-     * Show the form for creating a new resource.
+     * Provide specific validation rules for update action.
+     *
+     * @param Update{{ class }}Request $request
+     * @param string|int $id
+     * @return array
      */
-    public function create(): Response
+    public function update(Update{{ class }}Request $request, $id)
     {
-        return Inertia::render('{{ inertiaPath }}/Create');
+        return $this->updateItem($request, $id);
     }
-
+    
     /**
-     * Store a newly created resource in storage.
+     * Get additional data for views.
+     *
+     * @return array
      */
-    public function store(Store{{ class }}Request $request): RedirectResponse
+    protected function getAdditionalData(): array
     {
-        $this->service->create($request->validated());
-
-        return redirect()->route('{{ routePrefix }}.index')
-            ->with('success', '{{ class }} created successfully.');
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show({{ class }} ${{ variableName }}): Response
-    {
-        return Inertia::render('{{ inertiaPath }}/Show', [
-            'item' => ${{ variableName }},
-        ]);
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit({{ class }} ${{ variableName }}): Response
-    {
-        return Inertia::render('{{ inertiaPath }}/Edit', [
-            'item' => ${{ variableName }},
-        ]);
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Update{{ class }}Request $request, {{ class }} ${{ variableName }}): RedirectResponse
-    {
-        $this->service->update(${{ variableName }}, $request->validated());
-
-        return redirect()->route('{{ routePrefix }}.index')
-            ->with('success', '{{ class }} updated successfully.');
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy({{ class }} ${{ variableName }}): RedirectResponse
-    {
-        $this->service->delete(${{ variableName }});
-
-        return redirect()->route('{{ routePrefix }}.index')
-            ->with('success', '{{ class }} deleted successfully.');
+        // Override this method to provide additional data to your views
+        return [];
     }
 }

@@ -3,93 +3,73 @@
 namespace {{ namespace }};
 
 use {{ modelNamespace }}\{{ class }};
-use App\Repositories\{{ repositoryNamespace }}{{ class }}Repository;
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Pagination\LengthAwarePaginator;
+use App\Repositories\Contracts\{{ class }}RepositoryInterface;
+use App\Services\BaseService;
+use App\Services\Contracts\{{ class }}ServiceInterface;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
-class {{ class }}Service
+class {{ class }}Service extends BaseService implements {{ class }}ServiceInterface
 {
     /**
-     * The repository instance.
-     */
-    protected $repository;
-
-    /**
      * Create a new service instance.
+     *
+     * @param {{ class }}RepositoryInterface $repository
      */
-    public function __construct({{ class }}Repository $repository)
+    public function __construct({{ class }}RepositoryInterface $repository)
     {
-        $this->repository = $repository;
+        parent::__construct($repository);
     }
 
     /**
-     * Get all resources.
+     * Custom method example for domain-specific business logic.
+     * This is just a template - add your domain logic methods here.
+     *
+     * @param string|int $key The ID of the {{ class }}
+     * @param array $additionalData Any additional data needed for the operation
+     * @return Model The {{ class }} model after processing
      */
-    public function all(array $columns = ['*']): Collection
+    public function processBusinessLogic(string|int $key, array $additionalData = []): Model
     {
-        return $this->repository->all($columns);
+        try {
+            DB::beginTransaction();
+            
+            // Get the model
+            $model = $this->show($key);
+            
+            // Process domain-specific logic here
+            // For example:
+            // if (isset($additionalData['someFlag']) && $additionalData['someFlag']) {
+            //     $this->performSpecialAction($model);
+            // }
+            
+            // Maybe update the model with new data
+            if (!empty($additionalData['updateData'])) {
+                $model = $this->update($key, $additionalData['updateData']);
+            }
+            
+            DB::commit();
+            return $model;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
     }
-
+    
     /**
-     * Get paginated resources.
+     * Override search functionality if needed with domain-specific logic.
+     * This is optional - the base implementation is usually sufficient.
+     *
+     * @param string $term
+     * @param array $columns
+     * @param int $perPage
+     * @return \Illuminate\Pagination\LengthAwarePaginator
      */
-    public function paginate(
-        int $perPage = 10,
-        ?string $search = null,
-        array $filters = [],
-        array $columns = ['*']
-    ): LengthAwarePaginator {
-        return $this->repository->paginate($perPage, $search, $filters, $columns);
-    }
-
-    /**
-     * Get a resource by its ID.
-     */
-    public function find(int $id, array $columns = ['*']): ?{{ class }}
+    /*
+    public function search(string $term, array $columns, int $perPage = 15): \Illuminate\Pagination\LengthAwarePaginator
     {
-        return $this->repository->find($id, $columns);
+        // Add any domain-specific search logic here
+        return parent::search($term, $columns, $perPage);
     }
-
-    /**
-     * Create a new resource.
-     */
-    public function create(array $data): {{ class }}
-    {
-        // Additional business logic can be added here before creation
-        return $this->repository->create($data);
-    }
-
-    /**
-     * Update a resource.
-     */
-    public function update({{ class }} ${{ variableName }}, array $data): bool
-    {
-        // Additional business logic can be added here before update
-        return $this->repository->update(${{ variableName }}, $data);
-    }
-
-    /**
-     * Delete a resource.
-     */
-    public function delete({{ class }} ${{ variableName }}): bool
-    {
-        // Additional business logic can be added here before deletion
-        return $this->repository->delete(${{ variableName }});
-    }
-
-    /**
-     * Restore a soft-deleted resource.
-     */
-    public function restore({{ class }} ${{ variableName }}): bool
-    {
-        return $this->repository->restore(${{ variableName }});
-    }
-
-    /**
-     * Permanently delete a soft-deleted resource.
-     */
-    public function forceDelete({{ class }} ${{ variableName }}): bool
-    {
-        return $this->repository->forceDelete(${{ variableName }});
-    }
+    */
 }

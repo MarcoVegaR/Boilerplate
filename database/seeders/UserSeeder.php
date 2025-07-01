@@ -2,26 +2,26 @@
 
 namespace Database\Seeders;
 
-use App\Models\Admin;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
-class AdminSeeder extends Seeder
+class UserSeeder extends Seeder
 {
     /**
      * Run the database seeds.
      */
     public function run(): void
     {
-        // Create admin user
-        $admin = Admin::create([
-            'name' => 'Admin User',
-            'email' => 'admin@example.com',
+        // Create default tenant user
+        $user = User::create([
+            'name' => 'Tenant User',
+            'email' => 'user@example.com',
             'password' => Hash::make('password'),
             'email_verified_at' => now(),
         ]);
         
-        $this->command->info("Admin user created: {$admin->email}");
+        $this->command->info("Regular user created: {$user->email}");
         $this->command->info("Default password: password");
     }
 }

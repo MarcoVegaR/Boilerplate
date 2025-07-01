@@ -1,0 +1,26 @@
+<?php
+
+namespace App\Services\Contracts;
+
+use {{ modelNamespace }}\{{ class }};
+use Illuminate\Database\Eloquent\Model;
+
+/**
+ * Interface {{ class }}ServiceInterface
+ * 
+ * Service contract for {{ class }} entity.
+ */
+interface {{ class }}ServiceInterface extends EntityServiceInterface
+{
+    /**
+     * Custom method example for domain-specific business logic.
+     * This is just a template - add your domain logic methods here.
+     *
+     * @param string|int $key The ID of the {{ class }}
+     * @param array $additionalData Any additional data needed for the operation
+     * @return Model The {{ class }} model after processing
+     */
+    public function processBusinessLogic(string|int $key, array $additionalData = []): Model;
+    
+    // Add additional domain-specific methods as needed
+}

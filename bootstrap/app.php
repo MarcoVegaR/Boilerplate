@@ -29,8 +29,14 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\HandleInertiaRequests::class,
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
         ]);
-
-        //
+        
+        // Registro de alias para middleware personalizado
+        $middleware->alias([
+            // Mantiene nuestro middleware guest personalizado
+            'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
+            // Sobrescribe el alias "auth" para usar nuestra versión que redirige según contexto
+            'auth'  => \App\Http\Middleware\Authenticate::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

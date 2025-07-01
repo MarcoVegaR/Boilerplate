@@ -20,6 +20,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Authentication Redirects
+    |--------------------------------------------------------------------------
+    |
+    | When a user is authenticated and tries to visit a login page, they will be
+    | redirected to the specified route based on their guard. This prevents
+    | mixing authentication contexts when navigating between admin and user areas.
+    |
+    */
+
+    'redirects' => [
+        'admin' => 'admin.dashboard',
+        'web' => 'dashboard',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Authentication Guards
     |--------------------------------------------------------------------------
     |
